@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NobuChirp</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <!-- LOADING -->
+    <div id="loading" class="loading-overlay" style="display:none;">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toastBox" class="toast-box"></div>
+
+    <!-- AUTH -->
+    <div id="authScreen" class="screen center-screen">
+        <div class="auth-box">
+            <div class="logo">🪶 NobuChirp</div>
+            <div class="tabs">
+                <button id="tabLogin" class="tab active">Вход</button>
+                <button id="tabRegister" class="tab">Регистрация</button>
+            </div>
+            <input id="authNick" class="input" placeholder="Никнейм" maxlength="30">
+            <input id="authPass" class="input" type="password" placeholder="Пароль" maxlength="50">
+            <button id="authBtn" class="btn btn-white full-width">Войти</button>
+            <div id="authError" class="error-text"></div>
+        </div>
+    </div>
+
+    <!-- BAN SCREEN -->
+    <div id="banScreen" class="screen center-screen" style="display:none; background:#1a0000;">
+        <div class="ban-box">
+            <div class="big-icon">🚫</div>
+            <h2>Вы забанены</h2>
+            <p id="banReason"></p>
+            <p id="banExpires"></p>
+            <button id="banLogout" class="btn btn-red">Выйти</button>
+        </div>
+    </div>
+
+    <!-- WARNING SCREEN -->
+    <div id="warnScreen" class="screen center-screen" style="display:none; background:#1a1a2e;">
+        <div class="warn-box">
+            <div class="big-icon">⚠️</div>
+            <h2>Предупреждение</h2>
+            <p id="warnMsg"></p>
+            <div id="warnTimer" class="timer">3:00</div>
+            <ul class="rules">
+                <li>Будьте вежливы</li>
+                <li>Никакого спама</li>
+                <li>Никаких оскорблений</li>
+                <li>Соблюдайте законы</li>
+            </ul>
+            <button id="warnAccept" class="btn btn-orange full-width" disabled>Я прочитал(а) правила</button>
+        </div>
+    </div>
+
+    <!-- APP -->
+    <div id="appScreen" class="screen" style="display:none;">
+        <header class="header">
+            <span class="logo" id="goFeed">🪶 NobuChirp</span>
+            <nav>
+                <button id="navFeed" class="nav-btn active">Лента</button>
+                <button id="navFollow" class="nav-btn">Подписки</button>
+                <button id="navTrends" class="nav-btn">Тренды</button>
+            </nav>
+            <div>
+                <button id="btnProfile" class="btn btn-outline btn-sm">Профиль</button>
+                <button id="btnAdmin" class="btn btn-outline btn-sm" style="display:none; border-color:#ffaa00; color:#ffaa00;">Админка</button>
+                <button id="btnLogout" class="btn btn-outline btn-sm" style="border-color:#ff4444; color:#ff4444;">Выйти</button>
+            </div>
+        </header>
+
+        <main id="mainContent" class="container">
+            <!-- Форма поста -->
+            <div class="post-form">
+                <textarea id="postText" class="input textarea" placeholder="Что нового?" maxlength="280"></textarea>
+                <div class="form-row">
+                    <button id="uploadBtn" class="btn btn-icon">📷</button>
+                    <input type="file" id="fileInput" accept="image/*" style="display:none;">
+                    <span id="charCount">0/280</span>
+                    <button id="submitPost" class="btn btn-white">Чирикнуть</button>
+                </div>
+                <div id="previewBox" style="display:none; position:relative; margin-top:8px;">
+                    <img id="previewImg" style="max-width:100%; max-height:200px; border-radius:8px;">
+                    <button id="removePreview" style="position:absolute; top:5px; right:5px; background:red; color:white; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer;">✕</button>
+                </div>
+            </div>
+
+            <!-- Контент -->
+            <div id="contentArea"></div>
+        </main>
+    </div>
+
+    <!-- MODAL: Comments -->
+    <div id="commentModal" class="modal" style="display:none;">
+        <div class="modal-box">
+            <div class="modal-head">
+                <h3>Комментарии</h3>
+                <button id="closeComments" class="btn-close">✕</button>
+            </div>
+            <div id="commentList" class="comment-list"></div>
+            <div class="comment-form">
+                <input id="commentInput" class="input" placeholder="Написать...">
+                <button id="sendComment" class="btn btn-white btn-sm">Отправить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Report -->
+    <div id="reportModal" class="modal" style="display:none;">
+        <div class="modal-box modal-sm">
+            <div class="modal-head">
+                <h3>Жалоба</h3>
+                <button id="closeReport" class="btn-close">✕</button>
+            </div>
+            <textarea id="reportText" class="input textarea" placeholder="Причина..."></textarea>
+            <button id="sendReport" class="btn btn-red full-width">Отправить</button>
+        </div>
+    </div>
+
+    <!-- MODAL: Edit Profile -->
+    <div id="editProfileModal" class="modal" style="display:none;">
+        <div class="modal-box modal-sm">
+            <div class="modal-head">
+                <h3>Профиль</h3>
+                <button id="closeEditProfile" class="btn-close">✕</button>
+            </div>
+            <label>Эмодзи:</label>
+            <div id="emojiGrid" class="emoji-grid">
+                <span class="emoji" data-e="😊">😊</span><span class="emoji" data-e="😎">😎</span>
+                <span class="emoji" data-e="🤓">🤓</span><span class="emoji" data-e="🦊">🦊</span>
+                <span class="emoji" data-e="🐱">🐱</span><span class="emoji" data-e="🐶">🐶</span>
+                <span class="emoji" data-e="🦄">🦄</span><span class="emoji" data-e="🔥">🔥</span>
+            </div>
+            <label>О себе:</label>
+            <textarea id="editBio" class="input textarea" maxlength="160" placeholder="О себе..."></textarea>
+            <button id="saveProfile" class="btn btn-white full-width">Сохранить</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
